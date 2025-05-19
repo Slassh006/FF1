@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+model User {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  email           String    @unique
+  password        String
+  role            String    @default("subscriber")
+  isAdmin         Boolean   @default(false)
+  avatar          String?
+  twoFactorEnabled Boolean  @default(false)
+  twoFactorSecret String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastLogin       DateTime?
+  referralCode    String?
+  coins           Int       @default(0)
+  permissions     String[]  @default([])
+  createdCodes    CraftlandCode[] @relation("CreatedCodes")
+}
+
+model CraftlandCode {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  code          String   @unique
+  title         String
+  description   String
+  category      String
+  difficulty    String?  @default("medium")
+  creator       User     @relation("CreatedCodes", fields: [creatorId], references: [id])
+  creatorId     String   @db.ObjectId
+  createdAt     DateTime @default(now())
+  downloadCount Int      @default(0)
+  coverImage    String?
+  videoUrl      String?
+  features      String[]
+  isVerified    Boolean  @default(false)
+  region        String
+}
+
+model UserCraftlandCodeInteraction {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  codeId        String   @db.ObjectId
+  isFavorite    Boolean  @default(false)
+  isUpvoted     Boolean  @default(false)
+  isDownvoted   Boolean  @default(false)
+  isLiked       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, codeId])
+}
+
+model Wallpaper {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  description   String
+  imageUrl      String
+  thumbnailUrl  String?
+  contentType   String
+  resolution    String?
+  category      String   @default("Free Fire")
+  downloads     Int      @default(0)
+  likes         Int      @default(0)
+  isPublished   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SecuritySettings {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionTimeout      Int      @default(30)
+  maxLoginAttempts    Int      @default(5)
+  lockoutDuration     Int      @default(15)
+  passwordExpiry      Int      @default(90)
+  enableTwoFactor     Boolean  @default(false)
+  requireUppercase    Boolean  @default(true)
+  requireLowercase    Boolean  @default(true)
+  requireNumbers      Boolean  @default(true)
+  requireSpecialChars Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
